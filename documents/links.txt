@@ -1,1 +1,3 @@
 https://towardsdatascience.com/another-twitter-sentiment-analysis-with-python-part-11-cnn-word2vec-41f5e28eda74
+
+https://kavita-ganesan.com/tfidftransformer-tfidfvectorizer-usage-differences/#.XbYlbuhKiMo
