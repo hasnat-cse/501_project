@@ -1,3 +1,7 @@
 https://towardsdatascience.com/another-twitter-sentiment-analysis-with-python-part-11-cnn-word2vec-41f5e28eda74
 
 https://python.gotrained.com/tf-idf-twitter-sentiment-analysis/?fbclid=IwAR0yKvVaQELSXv4pu0s8Di8ANf5G2sDl5r-l6g7Fde-208d95Pd4MgLtHVk
+
+https://towardsdatascience.com/sentiment-analysis-of-transliterated-texts-in-hindi-and-marathi-languages-c29eab19fae2
+
+https://pypi.org/project/indic-transliteration/?fbclid=IwAR3-MoVLoYrJPVucNslpzQa6msweEaN-prL5D61QcSn7eacDVawXpwT1CHo
