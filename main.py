@@ -25,7 +25,7 @@ def main():
 
     texts.fillna(0)
 
-    print(len(texts))
+    
 
     # print(texts.head())
     # print(texts.shape)
@@ -39,6 +39,8 @@ def main():
     negative_count = 0
 
     neutral_count = 0
+
+    count = 0
 
     for s in y :
 
@@ -54,11 +56,19 @@ def main():
 
     		neutral_count += 1
 
+    	else :
+
+    		print (s)
+
+    	count += 1
+
     print (positive_count)
 
-    print (neutral_count)
+    print (negative_count)
 
     print (neutral_count)
+
+    print (count)
 
     """processed_texts = []
     for sentence in range(0, len(X)):
