@@ -25,15 +25,43 @@ def main():
 
     texts.fillna(0)
 
+    print(len(texts))
+
     # print(texts.head())
     # print(texts.shape)
 
-    x = texts.iloc[:, 0].values
+    X = texts.iloc[:, 0].values
     y = texts.iloc[:, 1].values
 
-    processed_texts = []
-    for sentence in range(0, len(x)):
+    positive_count = 0
 
+    negative_count = 0
+
+    neutral_count = 0
+
+    for s in y:
+
+        if (s == "postive"):
+
+            positive_count += 1
+
+        elif (s == "negative"):
+
+            negative_count += 1
+
+        elif (s == "neutral"):
+
+            neutral_count += 1
+
+    print(positive_count)
+
+    print(neutral_count)
+
+    print(neutral_count)
+
+    """processed_texts = []
+    for sentence in range(0, len(X)):
+>>>>>>> bde45bbdc28bd311579db9068c0c854d7c9e6c85:main.py
         # Remove all the special characters
         processed_text = re.sub(r'\W', ' ', str(x[sentence]))
 
@@ -68,7 +96,7 @@ def main():
 
     print(confusion_matrix(y_test, predictions))
     print(classification_report(y_test, predictions))
-    print(accuracy_score(y_test, predictions))
+    print(accuracy_score(y_test, predictions))"""
 
 
 if __name__ == "__main__":
