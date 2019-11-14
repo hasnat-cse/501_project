@@ -32,9 +32,10 @@ def main():
     y = texts.iloc[:, 1].values
 
     processed_texts = []
-    for sentence in range(0, len(X)):
+    for sentence in range(0, len(x)):
+
         # Remove all the special characters
-        processed_text = re.sub(r'\W', ' ', str(X[sentence]))
+        processed_text = re.sub(r'\W', ' ', str(x[sentence]))
 
         # remove all single characters
         processed_text = re.sub(r'\s+[a-zA-Z]\s+', ' ', processed_text)
