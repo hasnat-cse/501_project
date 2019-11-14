@@ -33,28 +33,28 @@ def main():
     X = texts.iloc[:, 0].values
     y = texts.iloc[:, 1].values
 
-
     positive_count = 0
 
     negative_count = 0
 
     neutral_count = 0
 
+
     count = 0
 
     for s in y :
 
-    	if (s== "postive"):
+        if (s == "postive"):
 
-    		positive_count += 1
+            positive_count += 1
 
-    	elif (s == "negative"):
+        elif (s == "negative"):
 
-    		negative_count += 1
+            negative_count += 1
 
-    	elif (s == "neutral"):
+        elif (s == "neutral"):
 
-    		neutral_count += 1
+            neutral_count += 1
 
     	else :
 
@@ -66,14 +66,15 @@ def main():
 
     print (negative_count)
 
-    print (neutral_count)
+    print(neutral_count)
 
     print (count)
 
     """processed_texts = []
     for sentence in range(0, len(X)):
+
         # Remove all the special characters
-        processed_text = re.sub(r'\W', ' ', str(X[sentence]))
+        processed_text = re.sub(r'\W', ' ', str(x[sentence]))
 
         # remove all single characters
         processed_text = re.sub(r'\s+[a-zA-Z]\s+', ' ', processed_text)
