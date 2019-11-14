@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 
-data = pd.read_csv('training_data.csv',encoding="latin1")
+data = pd.read_csv('data/training_data.csv',encoding="latin1")
 
 # print(data.head(10))
 
@@ -37,8 +37,14 @@ for sentence in range(0, len(x)):
     processed_text = re.sub(r'\^[a-zA-Z]\s+', ' ', processed_text)
 
     # Converting to Lowercase
-    # processed_text = processed_text.lower()
+    processed_text = processed_text.lower()
+
+    # Remove more than 2 repetition of letters in word
+    pattern = re.compile(r"(.)\1{2,}", re.DOTALL)
+    processed_text = pattern.sub(r"\1", processed_text)
 
     processed_texts.append(processed_text)
 
-print(processed_texts)
+    print(processed_text)
+
+    print("\n")
