@@ -148,12 +148,10 @@ def calculate_sentival_sum(senti_vals):
         return []
 
 
-def main():
-    # processed_texts = preprocess_data()
-
-    sentences = read_word_label_file()
-
+def get_english_senti_scores(sentences):
     ps = PorterStemmer()
+
+    senti_scores = []
     for sentence in sentences:
         words = get_eng_words(sentence)
         words = [ps.stem(x) for x in words]
@@ -166,6 +164,18 @@ def main():
 
         sum_sentivals = calculate_sentival_sum(senti_vals)
         print(sum_sentivals)
+
+        senti_scores.append(sum_sentivals)
+
+    return senti_scores
+
+
+def main():
+    # processed_texts = preprocess_data()
+
+    sentences = read_word_label_file()
+
+    english_senti_scores = get_english_senti_scores(sentences)
 
 
 if __name__ == "__main__":
