@@ -132,6 +132,22 @@ def get_eng_words(sentence):
     return eng_words
 
 
+def calculate_sentival_sum(senti_vals):
+
+    # append only non empty lists
+    filtered_senti_vals = []
+    for vals in senti_vals:
+        if vals:
+            filtered_senti_vals.append(vals)
+
+    # sum all the list values
+    if filtered_senti_vals:
+        return [sum(x) for x in zip(*filtered_senti_vals)]
+
+    else:
+        return []
+
+
 def main():
     # processed_texts = preprocess_data()
 
@@ -140,10 +156,16 @@ def main():
     ps = PorterStemmer()
     for sentence in sentences:
         words = get_eng_words(sentence)
+        words = [ps.stem(x) for x in words]
+
         pos_val = pos_tag(words)
-        senti_val = [get_sentiment(x, y) for (x, y) in pos_val]
+
+        senti_vals = [get_sentiment(x, y) for (x, y) in pos_val]
         print(words)
-        print(senti_val)
+        print(senti_vals)
+
+        sum_sentivals = calculate_sentival_sum(senti_vals)
+        print(sum_sentivals)
 
 
 if __name__ == "__main__":

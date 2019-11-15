@@ -7,6 +7,8 @@ https://towardsdatascience.com/sentiment-analysis-of-transliterated-texts-in-hin
 https://pypi.org/project/indic-transliteration/?fbclid=IwAR3-MoVLoYrJPVucNslpzQa6msweEaN-prL5D61QcSn7eacDVawXpwT1CHo
 
 
+sentiwordnet:
+https://stackoverflow.com/questions/38263039/sentiwordnet-scoring-with-python
 
 
 
