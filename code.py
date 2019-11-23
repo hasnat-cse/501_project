@@ -5,7 +5,7 @@ from nltk.corpus import wordnet as wn
 from nltk.corpus import sentiwordnet as swn
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
-from nltk import pos_tag
+from nltk import pos_tag, word_tokenize
 
 
 def preprocess_data():
@@ -53,9 +53,9 @@ def preprocess_data():
 
         processed_texts.append(processed_text)
 
-        print(processed_text)
-
-        print("\n")
+        # print(processed_text)
+        #
+        # print("\n")
 
     return processed_texts
 
@@ -81,6 +81,16 @@ def read_word_label_file():
                 sentence.append(tuple(words))
 
     return sentences
+
+
+def get_tokenized_sentence_list(sentence_list):
+    tokenized_sentence_list = []
+
+    for sentence in sentence_list:
+        tokens = word_tokenize(sentence)
+        tokenized_sentence_list.append(tokens)
+
+    return tokenized_sentence_list
 
 
 def penn_to_wn(tag):
@@ -170,12 +180,36 @@ def get_english_senti_scores(sentences):
     return senti_scores
 
 
+def get_senti_scores(tokenized_sentences):
+    ps = PorterStemmer()
+
+    senti_scores = []
+    for sentence_tokens in tokenized_sentences:
+        sentence_tokens = [ps.stem(x) for x in sentence_tokens]
+
+        pos_val = pos_tag(sentence_tokens)
+
+        senti_vals = [get_sentiment(x, y) for (x, y) in pos_val]
+        print(sentence_tokens)
+        print(senti_vals)
+
+        sum_sentivals = calculate_sentival_sum(senti_vals)
+        print(sum_sentivals)
+
+        senti_scores.append(sum_sentivals)
+
+    return senti_scores
+
+
 def main():
-    # processed_texts = preprocess_data()
+    processed_texts = preprocess_data()
 
-    sentences = read_word_label_file()
+    # sentences = read_word_label_file()
+    # english_senti_scores = get_english_senti_scores(sentences)
 
-    english_senti_scores = get_english_senti_scores(sentences)
+    tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
+
+    get_senti_scores(tokenized_sentence_list)
 
 
 if __name__ == "__main__":
