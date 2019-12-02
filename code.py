@@ -57,7 +57,7 @@ def preprocess_data():
         #
         # print("\n")
 
-    return processed_texts
+    return processed_texts, y
 
 
 def read_word_label_file():
@@ -143,7 +143,6 @@ def get_eng_words(sentence):
 
 
 def calculate_sentival_sum(senti_vals):
-
     # append only non empty lists
     filtered_senti_vals = []
     for vals in senti_vals:
@@ -180,7 +179,7 @@ def get_english_senti_scores(sentences):
     return senti_scores
 
 
-def get_senti_scores(tokenized_sentences):
+def get_senti_english_scores(tokenized_sentences):
     ps = PorterStemmer()
 
     senti_scores = []
@@ -201,15 +200,40 @@ def get_senti_scores(tokenized_sentences):
     return senti_scores
 
 
+def get_hindi_senti_scores(sentence_list):
+    hindi_score_data = pd.read_csv('Hinglish_Profanity_List.csv', encoding="latin1")
+
+    senti_scores = []
+    for sentence in sentence_list:
+
+        sum_scores = 0
+        for hindi_word, score in zip(hindi_score_data['hindi'], hindi_score_data['profanity']):
+
+            r = re.compile(r'\b%s\b' % hindi_word, re.I)
+            if r.search(sentence.lower()) is not None:
+
+                sum_scores += int(score)
+
+        senti_scores.append(sum_scores)
+
+    return senti_scores
+
+
 def main():
-    processed_texts = preprocess_data()
+    processed_texts, sentiments = preprocess_data()
 
     # sentences = read_word_label_file()
     # english_senti_scores = get_english_senti_scores(sentences)
 
-    tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
+    # tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
 
-    get_senti_scores(tokenized_sentence_list)
+    # get_senti_english_scores(tokenized_sentence_list)
+
+    hindi_scores = get_hindi_senti_scores(processed_texts)
+
+    for i, score in enumerate(hindi_scores):
+        if score > 0:
+            print(processed_texts[i] + " ---- " + sentiments[i] + " ----- " + str(score))
 
 
 if __name__ == "__main__":
