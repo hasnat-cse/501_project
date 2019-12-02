@@ -157,29 +157,7 @@ def calculate_sentival_sum(senti_vals):
         return []
 
 
-def get_english_senti_scores(sentences):
-    ps = PorterStemmer()
-
-    senti_scores = []
-    for sentence in sentences:
-        words = get_eng_words(sentence)
-        words = [ps.stem(x) for x in words]
-
-        pos_val = pos_tag(words)
-
-        senti_vals = [get_sentiment(x, y) for (x, y) in pos_val]
-        print(words)
-        print(senti_vals)
-
-        sum_sentivals = calculate_sentival_sum(senti_vals)
-        print(sum_sentivals)
-
-        senti_scores.append(sum_sentivals)
-
-    return senti_scores
-
-
-def get_senti_english_scores(tokenized_sentences):
+def get_english_senti_scores(tokenized_sentences):
     ps = PorterStemmer()
 
     senti_scores = []
@@ -222,12 +200,9 @@ def get_hindi_senti_scores(sentence_list):
 def main():
     processed_texts, sentiments = preprocess_data()
 
-    # sentences = read_word_label_file()
-    # english_senti_scores = get_english_senti_scores(sentences)
-
     # tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
 
-    # get_senti_english_scores(tokenized_sentence_list)
+    # get_english_senti_scores(tokenized_sentence_list)
 
     hindi_scores = get_hindi_senti_scores(processed_texts)
 
