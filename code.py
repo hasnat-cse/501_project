@@ -7,6 +7,9 @@ from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag, word_tokenize
 
+from indic_transliteration import sanscript
+from indic_transliteration.sanscript import transliterate
+
 
 def preprocess_data():
     data = pd.read_csv('data/training_data.csv', encoding="latin1")
@@ -83,6 +86,28 @@ def read_word_label_file():
     return sentences
 
 
+def parse_hindi_senti_wordnet(filename):
+    f = open(filename, encoding="utf-8")
+
+    data = f.read()
+
+    pos_word_tuple_list = []
+
+    lines = data.split('\n')
+
+    for line in lines:
+
+        line = line.strip()
+        if line != '' and line[0] != '#':
+
+            pos_word = line.split('\t')
+
+            if len(pos_word) == 2:
+                pos_word_tuple_list.append(tuple(pos_word))
+
+    return pos_word_tuple_list
+
+
 def get_tokenized_sentence_list(sentence_list):
     tokenized_sentence_list = []
 
@@ -157,6 +182,68 @@ def calculate_sentival_sum(senti_vals):
         return []
 
 
+def normalize_values(value_list):
+    sum_val = 0
+    for value in value_list:
+        sum_val += value
+
+    if sum_val != 0:
+        for i in range(0, len(value_list)):
+            value_list[i] = value_list[i] / sum_val
+
+    return value_list
+
+
+def get_hindi_senti_scores(tokenized_sentences):
+    senti_scores_list = []
+
+    hindi_senti_wordnet_dict = {'negative': parse_hindi_senti_wordnet('Hindi_SentiWordNet/HN_NEG.txt'),
+                                'positive': parse_hindi_senti_wordnet('Hindi_SentiWordNet/HN_POS.txt'),
+                                'neutral': parse_hindi_senti_wordnet('Hindi_SentiWordNet/HN_NEU.txt')}
+
+    for sentence_tokens in tokenized_sentences:
+        pos_score = 0
+        neg_score = 0
+        neu_score = 0
+
+        for token in sentence_tokens:
+
+            converted_hindi_word = transliterate(token, sanscript.ITRANS, sanscript.DEVANAGARI)
+            found = False
+
+            for pos_word_tuple in hindi_senti_wordnet_dict['positive']:
+
+                if converted_hindi_word == pos_word_tuple[1]:
+                    pos_score += 1
+                    found = True
+                    # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                    break
+
+            if not found:
+                for pos_word_tuple in hindi_senti_wordnet_dict['negative']:
+
+                    if converted_hindi_word == pos_word_tuple[1]:
+                        neg_score += 1
+                        # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                        found = True
+                        break
+
+            if not found:
+                for pos_word_tuple in hindi_senti_wordnet_dict['neutral']:
+
+                    if converted_hindi_word == pos_word_tuple[1]:
+                        neu_score += 1
+                        # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                        found = True
+                        break
+
+        normalized_senti_scores = normalize_values([pos_score, neg_score, neu_score])
+
+        senti_scores_list.append(normalized_senti_scores)
+
+    return senti_scores_list
+
+
 def get_english_senti_scores(tokenized_sentences):
     ps = PorterStemmer()
 
@@ -173,12 +260,14 @@ def get_english_senti_scores(tokenized_sentences):
         sum_sentivals = calculate_sentival_sum(senti_vals)
         print(sum_sentivals)
 
-        senti_scores.append(sum_sentivals)
+        normalized_sum_sentivals = normalize_values(sum_sentivals)
+
+        senti_scores.append(normalized_sum_sentivals)
 
     return senti_scores
 
 
-def get_hindi_senti_scores(sentence_list):
+def get_hindi_profanity_scores(sentence_list):
     hindi_score_data = pd.read_csv('Hinglish_Profanity_List.csv', encoding="latin1")
 
     senti_scores = []
@@ -189,7 +278,6 @@ def get_hindi_senti_scores(sentence_list):
 
             r = re.compile(r'\b%s\b' % hindi_word, re.I)
             if r.search(sentence.lower()) is not None:
-
                 sum_scores += int(score)
 
         senti_scores.append(sum_scores)
@@ -200,15 +288,18 @@ def get_hindi_senti_scores(sentence_list):
 def main():
     processed_texts, sentiments = preprocess_data()
 
-    # tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
+    tokenized_sentence_list = get_tokenized_sentence_list(processed_texts)
 
     # get_english_senti_scores(tokenized_sentence_list)
 
-    hindi_scores = get_hindi_senti_scores(processed_texts)
+    # hindi_profanity_scores = get_hindi_profanity_scores(processed_texts)
 
-    for i, score in enumerate(hindi_scores):
-        if score > 0:
-            print(processed_texts[i] + " ---- " + sentiments[i] + " ----- " + str(score))
+    # for i, score in enumerate(hindi_scores):
+    #     if score > 0:
+    #         print(processed_texts[i] + " ---- " + sentiments[i] + " ----- " + str(score))
+
+    hindi_senti_scores = get_hindi_senti_scores(tokenized_sentence_list)
+    # print(hindi_senti_scores)
 
 
 if __name__ == "__main__":

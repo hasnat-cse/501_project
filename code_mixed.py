@@ -10,6 +10,14 @@ Original file is located at
 from google.colab import drive
 drive.mount('/content/drive')
 
+pip install indic_transliteration -U
+
+import nltk
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('wordnet')
+nltk.download('sentiwordnet')
+
 import pandas as pd
 import re
 
@@ -18,16 +26,18 @@ import tensorflow_hub as hub
 import numpy as np
 
 import nltk
-nltk.download('punkt')
-nltk.download('averaged_perceptron_tagger')
-nltk.download('wordnet')
-nltk.download('sentiwordnet')
 
 from nltk.corpus import wordnet as wn
 from nltk.corpus import sentiwordnet as swn
 from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag, word_tokenize
+
+from indic_transliteration import sanscript
+from indic_transliteration.sanscript import transliterate
+
+
+colab_path = '/content/drive/My Drive/Colab Notebooks/'
 
 
 def preprocess_data(data):
@@ -181,7 +191,7 @@ def get_english_senti_scores(tokenized_sentences):
 
 
 def get_hindi_profanity_scores(sentence_list):
-    hindi_score_data = pd.read_csv('/content/drive/My Drive/Colab Notebooks/Hinglish_Profanity_List.csv', encoding="latin1")
+    hindi_score_data = pd.read_csv(colab_path + 'Hinglish_Profanity_List.csv', encoding="latin1")
 
     profanity_scores = []
     for sentence in sentence_list:
@@ -198,51 +208,142 @@ def get_hindi_profanity_scores(sentence_list):
 
     return profanity_scores
 
-data = pd.read_csv('/content/drive/My Drive/Colab Notebooks/training_data.csv',encoding="latin1")
-data = preprocess_data(data)
-print(data.head(10))
 
-test_data = pd.read_csv('/content/drive/My Drive/Colab Notebooks/test_data.csv',encoding="latin1")
+def parse_hindi_senti_wordnet(filename):
+    f = open(filename, encoding="utf-8")
+
+    data = f.read()
+
+    pos_word_tuple_list = []
+
+    lines = data.split('\n')
+
+    for line in lines:
+
+        line = line.strip()
+        if line != '' and line[0] != '#':
+
+            pos_word = line.split('\t')
+
+            if len(pos_word) == 2:
+                pos_word_tuple_list.append(tuple(pos_word))
+
+    return pos_word_tuple_list
+
+
+def get_hindi_senti_scores(tokenized_sentences):
+    senti_scores_list = []
+
+    hindi_senti_wordnet_dict = {'negative': parse_hindi_senti_wordnet(colab_path + 'Hindi_SentiWordNet/HN_NEG.txt'),
+                                'positive': parse_hindi_senti_wordnet(colab_path + 'Hindi_SentiWordNet/HN_POS.txt'),
+                                'neutral': parse_hindi_senti_wordnet(colab_path + 'Hindi_SentiWordNet/HN_NEU.txt')}
+
+    for sentence_tokens in tokenized_sentences:
+        pos_score = 0
+        neg_score = 0
+        neu_score = 0
+
+        for token in sentence_tokens:
+
+            converted_hindi_word = transliterate(token, sanscript.ITRANS, sanscript.DEVANAGARI)
+            found = False
+
+            for pos_word_tuple in hindi_senti_wordnet_dict['positive']:
+
+                if converted_hindi_word == pos_word_tuple[1]:
+                    pos_score += 1
+                    found = True
+                    # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                    break
+
+            if not found:
+                for pos_word_tuple in hindi_senti_wordnet_dict['negative']:
+
+                    if converted_hindi_word == pos_word_tuple[1]:
+                        neg_score += 1
+                        # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                        found = True
+                        break
+
+            if not found:
+                for pos_word_tuple in hindi_senti_wordnet_dict['neutral']:
+
+                    if converted_hindi_word == pos_word_tuple[1]:
+                        neu_score += 1
+                        # print("%s is %s equals to %s" % (token, converted_hindi_word, pos_word_tuple[1]))
+                        found = True
+                        break
+
+        normalized_senti_scores = normalize_values([pos_score, neg_score, neu_score])
+
+        senti_scores_list.append(normalized_senti_scores)
+
+    return senti_scores_list
+
+train_data = pd.read_csv(colab_path + 'training_data.csv',encoding="latin1")
+train_data = preprocess_data(train_data)
+
+
+test_data = pd.read_csv(colab_path + 'test_data.csv',encoding="latin1")
 test_data = preprocess_data(test_data)
-print(test_data.head(10))
 
-sentences = data['Sentence'].values
-sentiments = data['Sentiment'].values
+train_sentences = train_data['Sentence'].values
+train_sentiments = train_data['Sentiment'].values
 
-train_sentences = sentences[:12000]
-train_sentiments = sentiments[:12000]
+#train_sentences = sentences[:12000]
+#train_sentiments = sentiments[:12000]
 
 #val_sentences = sentences[10000:12000]
 #val_sentiments = sentiments[10000:12000]
 
-test_sentences = sentences[12000:]
-test_sentiments = sentiments[12000:]
+test_sentences = test_data['Sentence'].values
+test_sentiments = test_data['Sentiment'].values
 
-tokenized_sentence_list = get_tokenized_sentence_list(sentences)
+tokenized_train_sentence_list = get_tokenized_sentence_list(train_sentences)
+   tokenized_test_sentence_list = get_tokenized_sentence_list(test_sentences)
 
-   senti_score_list = get_english_senti_scores(tokenized_sentence_list)
+   senti_train_score_list = get_english_senti_scores(tokenized_train_sentence_list)
+   senti_test_score_list = get_english_senti_scores(tokenized_test_sentence_list)
 
-   hindi_profanity_score_list = get_hindi_profanity_scores(sentences)
+   hindi_profanity_train_score_list = get_hindi_profanity_scores(train_sentences)
+   hindi_profanity_train_scores = np.array(hindi_profanity_train_score_list)
 
-   hindi_profanity_score_list = np.array(hindi_profanity_score_list)
+   hindi_profanity_test_score_list = get_hindi_profanity_scores(test_sentences)
+   hindi_profanity_test_scores = np.array(hindi_profanity_test_score_list)
 
-   print(hindi_profanity_score_list)
 
-positive_score = []
-negative_score = []
-objective_score = []
+   hindi_senti_train_scores = get_hindi_senti_scores(tokenized_train_sentence_list)
+   hindi_senti_test_scores = get_hindi_senti_scores(tokenized_test_sentence_list)
 
-for x in senti_score_list:
+positive_train_score = []
+negative_train_score = []
+objective_train_score = []
 
-  positive_score.append(x[0])
-  negative_score.append(x[1])
-  objective_score.append(x[2])
+for x in senti_train_score_list:
 
-positive_score = np.array(positive_score)
-negative_score = np.array(negative_score)
-objective_score = np.array(objective_score)
+  positive_train_score.append(x[0])
+  negative_train_score.append(x[1])
+  objective_train_score.append(x[2])
 
-english_positive_train_scores = positive_score[:12000]
+positive_test_score = []
+negative_test_score = []
+objective_test_score = []
+
+for x in senti_test_score_list:
+
+  positive_test_score.append(x[0])
+  negative_test_score.append(x[1])
+  objective_test_score.append(x[2])
+
+english_positive_train_scores = np.array(positive_train_score)
+english_negative_train_scores = np.array(negative_train_score)
+english_objective_train_scores = np.array(objective_train_score)
+
+english_positive_test_scores = np.array(positive_test_score)
+english_negative_test_scores = np.array(negative_test_score)
+english_objective_test_scores = np.array(objective_test_score)
+
+"""english_positive_train_scores = positive_score[:12000]
 #english_positive_validation_scores = positive_score[10000:12000]
 english_positive_test_scores = positive_score[12000:]
 
@@ -255,20 +356,20 @@ english_objective_train_scores = objective_score[:12000]
 english_objective_test_scores = objective_score[12000:]
 
 hindi_profanity_train_score = hindi_profanity_score_list[:12000]
-hindi_profanity_test_score = hindi_profanity_score_list[12000:]
+hindi_profanity_test_score = hindi_profanity_score_list[12000:]"""
 
 train_input_fn = tf.estimator.inputs.numpy_input_fn(
-    {'sentence': train_sentences,  'hin_prof_score': hindi_profanity_train_score}, train_sentiments, 
+    {'sentence': train_sentences, 'eng_pos_score' : english_positive_train_scores, 'eng_neg_score': english_negative_train_scores, 'eng_obj_score': english_objective_train_scores, 'hin_prof_score': hindi_profanity_train_scores}, train_sentiments, 
     batch_size=512, num_epochs=None, shuffle=True)
 
 predict_train_input_fn = tf.estimator.inputs.numpy_input_fn(
-    {'sentence': train_sentences,  'hin_prof_score': hindi_profanity_train_score}, train_sentiments, shuffle=False)
+    {'sentence': train_sentences,'eng_pos_score' : english_positive_train_scores, 'eng_neg_score': english_negative_train_scores, 'eng_obj_score': english_objective_train_scores,  'hin_prof_score': hindi_profanity_train_scores}, train_sentiments, shuffle=False)
 
 #predict_val_input_fn = tf.estimator.inputs.numpy_input_fn(
  #   {'sentence': val_sentences, 'eng_pos_score': english_positive_validation_scores, 'eng_neg_score': english_negative_validation_scores, 'eng_obj_score': english_objective_validation_scores}, val_sentiments, shuffle=False)
 
 predict_test_input_fn = tf.estimator.inputs.numpy_input_fn(
-    {'sentence': test_sentences,  'hin_prof_score': hindi_profanity_test_score}, test_sentiments, shuffle=False)
+    {'sentence': test_sentences, 'eng_pos_score' : english_positive_test_scores, 'eng_neg_score': english_negative_test_scores, 'eng_obj_score': english_objective_test_scores, 'hin_prof_score': hindi_profanity_test_scores}, test_sentiments, shuffle=False)
 
 embedding_feature = hub.text_embedding_column(
     key='sentence', 
@@ -282,18 +383,18 @@ eng_obj_score = tf.feature_column.numeric_column(key='eng_obj_score')
 hin_prof_score = tf.feature_column.numeric_column(key = 'hin_prof_score')
 
 dnn = tf.estimator.DNNClassifier(
-          hidden_units=[512, 128, 64, 32],
-          feature_columns=[embedding_feature, hin_prof_score], 
+          hidden_units=[512, 128],
+          feature_columns=[embedding_feature, eng_pos_score, eng_neg_score, eng_obj_score, hin_prof_score], 
           n_classes=3,
           label_vocabulary = ["0", "1", "2"],
           activation_fn=tf.nn.relu,
           dropout=0.1,
-          optimizer=tf.train.AdagradOptimizer(learning_rate=0.05))
+          optimizer=tf.train.AdagradOptimizer(learning_rate=0.005))
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 import time
 
-TOTAL_STEPS = 300
+TOTAL_STEPS = 600
 STEP_SIZE = 30
 for step in range(0, TOTAL_STEPS+1, STEP_SIZE):
     print()
@@ -307,3 +408,12 @@ for step in range(0, TOTAL_STEPS+1, STEP_SIZE):
     print('Eval Metrics (Test):', dnn.evaluate(input_fn=predict_test_input_fn))
 
 dnn.evaluate(input_fn = predict_test_input_fn)
+
+url = "https://tfhub.dev/google/universal-sentence-encoder/2"
+embed = hub.Module(url)
+
+from sklearn import preprocessing
+
+le = preprocessing.LabelEncoder()
+
+le.fit(train_sentiments)
