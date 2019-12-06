@@ -17,6 +17,7 @@ nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('wordnet')
 nltk.download('sentiwordnet')
+nltk.download('words')
 
 import pandas as pd
 import re
@@ -27,6 +28,7 @@ import numpy as np
 
 import nltk
 
+from nltk.corpus import words
 from nltk.corpus import wordnet as wn
 from nltk.corpus import sentiwordnet as swn
 from nltk.stem import PorterStemmer
@@ -90,13 +92,27 @@ def preprocess_data(data):
 
 
 def get_tokenized_sentence_list(sentence_list):
-    tokenized_sentence_list = []
+    sentence_list_with_english_tokens = []
+    sentence_list_with_hindi_tokens = []
+
+
+    nltk_words_set = set(words.words())
 
     for sentence in sentence_list:
-        tokens = word_tokenize(sentence)
-        tokenized_sentence_list.append(tokens)
+        tokens = sentence.split()
 
-    return tokenized_sentence_list
+        english_tokens = []
+        hindi_tokens = []
+        for token in tokens:
+            if token in nltk_words_set:
+                english_tokens.append(token)
+            else:
+                hindi_tokens.append(token)
+        
+        sentence_list_with_english_tokens.append(english_tokens)
+        sentence_list_with_hindi_tokens.append(hindi_tokens)
+
+    return sentence_list_with_english_tokens, sentence_list_with_hindi_tokens
 
 
 def penn_to_wn(tag):
@@ -190,19 +206,21 @@ def get_english_senti_scores(tokenized_sentences):
     return senti_scores
 
 
-def get_hindi_profanity_scores(sentence_list):
+def get_hindi_profanity_scores(tokenized_sentences):
     hindi_score_data = pd.read_csv(colab_path + 'Hinglish_Profanity_List.csv', encoding="latin1")
 
     profanity_scores = []
-    for sentence in sentence_list:
+    for sentence_tokens in tokenized_sentences:
 
         sum_scores = 0
-        for hindi_word, score in zip(hindi_score_data['Hindi'], hindi_score_data['Profanity']):
+        for token in sentence_tokens:
 
-            r = re.compile(r'\b%s\b' % hindi_word, re.I)
-            if r.search(sentence.lower()) is not None:
+            for hindi_word, score in zip(hindi_score_data['Hindi'], hindi_score_data['Profanity']):
 
-                sum_scores += int(score)
+                if token == hindi_word:
+
+                    sum_scores += int(score)
+                    break
 
         profanity_scores.append(sum_scores)
 
@@ -299,21 +317,21 @@ train_sentiments = train_data['Sentiment'].values
 test_sentences = test_data['Sentence'].values
 test_sentiments = test_data['Sentiment'].values
 
-tokenized_train_sentence_list = get_tokenized_sentence_list(train_sentences)
-   tokenized_test_sentence_list = get_tokenized_sentence_list(test_sentences)
+train_sentences_with_english_tokens, train_sentences_with_hindi_tokens = get_tokenized_sentence_list(train_sentences)
+   test_sentences_with_english_tokens, test_sentences_with_hindi_tokens = get_tokenized_sentence_list(test_sentences)
 
-   senti_train_score_list = get_english_senti_scores(tokenized_train_sentence_list)
-   senti_test_score_list = get_english_senti_scores(tokenized_test_sentence_list)
+   senti_train_score_list = get_english_senti_scores(train_sentences_with_english_tokens)
+   senti_test_score_list = get_english_senti_scores(test_sentences_with_english_tokens)
 
-   hindi_profanity_train_score_list = get_hindi_profanity_scores(train_sentences)
+   hindi_profanity_train_score_list = get_hindi_profanity_scores(train_sentences_with_hindi_tokens)
    hindi_profanity_train_scores = np.array(hindi_profanity_train_score_list)
 
-   hindi_profanity_test_score_list = get_hindi_profanity_scores(test_sentences)
+   hindi_profanity_test_score_list = get_hindi_profanity_scores(test_sentences_with_hindi_tokens)
    hindi_profanity_test_scores = np.array(hindi_profanity_test_score_list)
 
 
-   hindi_senti_train_scores = get_hindi_senti_scores(tokenized_train_sentence_list)
-   hindi_senti_test_scores = get_hindi_senti_scores(tokenized_test_sentence_list)
+   hindi_senti_train_scores = get_hindi_senti_scores(train_sentences_with_hindi_tokens)
+   hindi_senti_test_scores = get_hindi_senti_scores(test_sentences_with_hindi_tokens)
 
 positive_train_score = []
 negative_train_score = []
