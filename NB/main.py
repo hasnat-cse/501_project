@@ -1,12 +1,9 @@
 import math
 import sys
 
-from nltk import word_tokenize
 from sklearn.metrics import confusion_matrix
 
 from nltk.corpus import stopwords
-
-import pandas as pd
 
 # nltk stopwords
 nltk_stopwords = set(stopwords.words('english'))
@@ -393,18 +390,17 @@ def evaluate(model, eval_set):
 
 
 def main():
-    # parse command line arguments (expecting: python3 main.py TRAIN_FILE_PATH TEST_FILE_PATH EVAL_FILE_PATH)
-    if len(sys.argv) < 4:
+    # parse command line arguments (expecting: python3 main.py TRAIN_FILE_PATH TEST_FILE_PATH)
+    if len(sys.argv) < 3:
         print("Invalid number of arguments. Use following command pattern:")
         print("python3 main.py TRAIN_FILE_PATH TEST_FILE_PATH EVAL_FILE_PATH")
         return
     else:
         train_file_path = sys.argv[1]
         test_file_path = sys.argv[2]
-        eval_file_path = sys.argv[3]
 
     # read and preprocess training file
-    with open(train_file_path, encoding = "latin1") as f:
+    with open(train_file_path, encoding="latin1") as f:
         train_content = f.read()
 
         # preprocess training data
@@ -428,19 +424,6 @@ def main():
 
     # write test output to output file
     write_output(get_file_name_excluding_extension(test_file_path), output_data_list)
-
-    # read and proprocess evaluation file
-    with open(eval_file_path) as f:
-        eval_content = f.read()
-
-        # preprocess evaluation data
-        processed_eval_sample_list = preprocess_data(eval_content)
-
-    # evaluate the model on eval data
-    output_data_list = evaluate(model, processed_eval_sample_list)
-
-    # write evaluation output to output file
-    write_output(get_file_name_excluding_extension(eval_file_path), output_data_list)
 
 
 if __name__ == "__main__":

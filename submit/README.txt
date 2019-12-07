@@ -4,7 +4,7 @@ Team Members:
 
 
 Special Instructions:
-	atleast python 3.7 required
+	python 3.7+ required
 	
 	python3
 	>>> import nltk
